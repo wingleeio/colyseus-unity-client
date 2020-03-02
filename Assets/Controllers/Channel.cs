@@ -9,18 +9,20 @@ using System.Collections.Generic;
 using Colyseus;
 using Colyseus.Schema;
 
+using ChannelSchema;
+
 public class Channel : MonoBehaviour
 {
     protected int maxMessages = 100;
     protected string endpoint = "ws://localhost:2567";
 
     protected Client client;
-    protected Room<ChannelState> channel;
+    protected Room<State> channel;
     
     public GameObject chatPanel, textObject;
     public InputField chatInput;
 
-    List<Message> messages =  new List<Message>();
+    List<LocalMessage> messages =  new List<LocalMessage>();
 
     void Start()
     {
@@ -32,7 +34,7 @@ public class Channel : MonoBehaviour
     {
         if (chatInput.text != "") {
             if (Input.GetKeyDown(KeyCode.Return)) {
-                SendMessage(chatInput.text);
+                SendMessageToServer(chatInput.text);
                 chatInput.text = "";
             }
         }
@@ -43,13 +45,13 @@ public class Channel : MonoBehaviour
     }
 
     async void JoinChannel() {
-        channel = await client.JoinOrCreate<ChannelState>("channel");
+        channel = await client.JoinOrCreate<State>("channel");
 
         channel.OnMessage += OnMessage;
     }
 
-    void SendMessage(string content) {
-        ChannelMessage message = new ChannelMessage();
+    void SendMessageToServer(string content) {
+        Message message = new Message();
 
         message.content = content;
 
@@ -57,12 +59,12 @@ public class Channel : MonoBehaviour
     }
 
     void OnMessage(object msg) {
-        if (msg is ChannelMessage) MessageCreate(msg);
+        if (msg is Message) MessageCreate(msg);
     }
 
     void MessageCreate(object msg) {
-        var channelMessage = (ChannelMessage)msg;
-        var message = new Message();
+        var channelMessage = (Message)msg;
+        var message = new LocalMessage();
 
         GameObject newText =  Instantiate(textObject, chatPanel.transform);
 
@@ -78,6 +80,6 @@ public class Channel : MonoBehaviour
     }
 }
 
-public class Message {
+public class LocalMessage {
     public Text textObject;
 }
